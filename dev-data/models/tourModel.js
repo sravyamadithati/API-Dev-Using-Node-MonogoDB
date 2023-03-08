@@ -34,6 +34,11 @@ const tourSchema = new mongoose.Schema(
          default: 4.5,
          min: [1, 'Rating must be above 1.0'],
          max: [5, 'Rating must be below 5.0'],
+         set: (value) => {
+            return Math.round(10 * value) / 10;
+            //return value.toFixed(1);
+         },
+         //Eg: will round 4.666666 to 4.7
       },
       ratingsQuantity: {
          type: Number,
@@ -119,6 +124,8 @@ tourSchema.virtual('reviews', {
    localField: '_id',
 });
 
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+
 tourSchema.pre(/^find/, function (next) {
    this.populate({
       path: 'guides',
@@ -127,6 +134,7 @@ tourSchema.pre(/^find/, function (next) {
    next();
 });
 //For embedding guides documents
+//document middleware runs before .save() or .create()
 // tourSchema.pre('save', async function (next) {
 //    const guidePromises = this.guides.map(async (id) => await User.findById(id));
 //    this.guides = await Promise.all(guidePromises);

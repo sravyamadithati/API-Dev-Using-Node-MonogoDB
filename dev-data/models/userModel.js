@@ -88,6 +88,7 @@ userSchema.pre('save', async function (next) {
    next();
 });
 
+//query middleware-this refers to query object
 userSchema.pre(/^find/, function () {
    this.find({ active: { $ne: false } });
 });
