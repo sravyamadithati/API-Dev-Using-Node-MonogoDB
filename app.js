@@ -6,17 +6,16 @@ const morgan = require('morgan');
 const hpp = require('hpp');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
-const AppError = require('./dev-data/utils/apiError');
-const tourRouter = require('./dev-data/routes/tourRoutes');
-const userRouter = require('./dev-data/routes/userRoutes');
-const reviewRouter = require('./dev-data/routes/reviewRoutes');
-const globalErrorhandler = require('./dev-data/controllers/errorController');
+const AppError = require('./utils/apiError');
+const tourRouter = require('./routes/tourRoutes');
+const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
+const globalErrorhandler = require('./controllers/errorController');
 
 const app = express();
 
 //set secure http headers
 app.use(helmet());
-
 if (process.env.NODE_ENV === 'development') {
    app.use(morgan('dev')); //for logging in dev environment
 }

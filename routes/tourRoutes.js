@@ -2,12 +2,21 @@ const express = require('express');
 const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
 //const reviewController = require('../controllers/reviewController');
-const reviewRouter = require('../routes/reviewRoutes');
+const reviewRouter = require('./reviewRoutes');
 const router = express.Router();
 
 router.use('/:tourId/reviews', reviewRouter);
 
 //router.param('id', tourController.checkId); //if url contains id params ,then this middleware will run
+
+router
+   .route('/tours-within/:distance/center/:latlng/unit/:unit')
+   .get(tourController.getToursWithin);
+
+router
+   .route('/distances/:latlng/unit/:unit')
+   .get(tourController.getTourDistances);
+
 router.route('/tour-stats').get(tourController.getTourStats);
 router
    .route('/monthly-plan/:year')
