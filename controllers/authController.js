@@ -116,6 +116,10 @@ exports.protect = catchAsync(async (req, res, next) => {
 exports.isLoggedIn = catchAsync(async (req, res, next) => {
    //1.get token and check if it is there
    if (req.cookies?.jwt) {
+      //if jwt='loggedOut' we will just call next middleware in stack.Since this is just for logging out,we will not go through any jwt verification step
+      if (req.cookies?.jwt === 'loggedOut') {
+         return next();
+      }
       //2.verify token
       const decoded = await jwt.verify(
          req.cookies?.jwt,
@@ -138,6 +142,17 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
    }
    next();
 });
+
+exports.logout = (req, res) => {
+   //here we are setting the jwt token to logged out so that user will not be able to authenticate
+   res.cookie('jwt', 'loggedOut', {
+      expires: new Date(Date.now() + 10 * 1000),
+      httpOnly: true,
+   });
+   res.status(200).json({
+      status: 'success',
+   });
+};
 
 exports.restrictTo = (...roles) => {
    return (req, res, next) => {

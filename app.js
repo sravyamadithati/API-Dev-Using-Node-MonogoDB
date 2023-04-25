@@ -96,8 +96,10 @@ app.use('/api', limiter);
 
 //body parser,reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
+
 //parser data from cookies
 app.use(cookieParser());
+
 //Data sanitisation against XSS
 app.use(xss());
 
