@@ -1,0 +1,29 @@
+doctype html 
+html
+  head
+    block head
+      meta(charset='UTF-8')
+      meta(
+        meta,
+        name='viewport',
+        content='width=device-width, initial-scale=1.0'
+      )
+      link(rel='stylesheet', href='/css/style.css')
+      link(rel='shortcut icon', type='image/png', href='/img/favicon.png')
+      link(
+        href='https://fonts.googleapis.com/css?family=Lato:300,300i,700',
+        rel='stylesheet'
+      )
+      title Natours | #{title}
+
+  body
+    // HEADER
+    include _header
+    // CONTENT
+    block content
+      h1 Some placeholder text
+    // FOOTER
+    include _footer
+    
+    //-we are adding script tag at the end to make sure the locations data(from tour.pug) is available to mapbox.js file by the it is inserted into dom
+    script(src='/js/bundle.js')

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 const validator = require('validator');
 const User = require('./userModel');
 const tourSchema = new mongoose.Schema(
@@ -7,12 +8,13 @@ const tourSchema = new mongoose.Schema(
          type: String,
          required: [true, 'A tour must have a name'],
          unique: true,
-         select: false,
+         //select: false,
          trim: true,
          maxLength: [40, 'A tour must have less or equal than 40 characters'],
          minLength: [10, 'A tour must have less or equal than 10 characters'],
          //validate:[validator.isAlpha,'Tour name must only contain characters']  //here,validator is third part library installed from npm
       },
+      slug: String,
       duration: {
          type: Number,
          required: [true, 'A tour must have a duration'],
@@ -113,6 +115,12 @@ const tourSchema = new mongoose.Schema(
       toObject: { virtuals: true }, //each time the data gets outputted,we want virtuals to present in object response
    }
 );
+
+//document middleware:runs before .save() and .create()
+tourSchema.pre('save', function (next) {
+   this.slug = slugify(this.name, { lower: true });
+   next();
+});
 
 tourSchema.virtual('durationWeeks').get(function () {
    return this.duration / 7;

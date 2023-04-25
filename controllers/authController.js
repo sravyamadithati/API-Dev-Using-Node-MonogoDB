@@ -78,6 +78,8 @@ exports.protect = catchAsync(async (req, res, next) => {
       req.headers.authorization.startsWith('Bearer')
    ) {
       token = req.headers.authorization.split(' ')[1];
+   } else if (req.cookies?.jwt) {
+      token = req.cookies.jwt;
    }
    console.log(token);
    if (!token) {
@@ -107,6 +109,33 @@ exports.protect = catchAsync(async (req, res, next) => {
    }
    //grant access to protected route
    req.user = freshUser;
+   next();
+});
+
+//Only for rendered pages,not to display errors
+exports.isLoggedIn = catchAsync(async (req, res, next) => {
+   //1.get token and check if it is there
+   if (req.cookies?.jwt) {
+      //2.verify token
+      const decoded = await jwt.verify(
+         req.cookies?.jwt,
+         process.env.JWT_SECRET
+      );
+      //console.log(isValidToken);
+
+      //3.check if user still exists(to handle scenario:If user got removed in mean time)
+      const freshUser = await User.findById(decoded.id);
+      if (!freshUser) {
+         return next();
+      }
+      //4.Check if user changes password,after JWT is issued
+      if (freshUser.changedPasswordAfter(decoded.iat)) {
+         return next();
+      }
+      //grant access to protected route
+      res.locals.user = freshUser;
+      return next();
+   }
    next();
 });
 
