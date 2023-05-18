@@ -3,7 +3,7 @@ import { login, logout } from './login';
 import { displayMap } from './leaflet';
 
 const map = document.getElementById('map');
-const loginForm = document.querySelector('.form');
+const loginForm = document.querySelector('.form--login');
 const logOutBtn = document.querySelector('.nav__el--logout');
 
 if (map) {

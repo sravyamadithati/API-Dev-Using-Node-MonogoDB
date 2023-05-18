@@ -23,40 +23,65 @@ const handleJsonWebTokenError = () =>
 
 const handleJwtExpiredError = () =>
    new AppError('Your token has expired.Please login again!');
-const sendErrorDev = (res, err) => {
-   res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message,
-      stack: err.stack,
-      error: err,
-   });
-};
-
-const sendErrorProd = (res, err) => {
-   //Operation,trusted error:send message to clien
-   if (err.isOperational) {
+const sendErrorDev = (req, res, err) => {
+   //For apis (that are accessed through postman or websites that directs access the api )
+   if (req.originalUrl.startsWith('/api')) {
       res.status(err.statusCode).json({
          status: err.status,
          message: err.message,
+         stack: err.stack,
+         error: err,
+      });
+   } else {
+      //for a rendered website(using browsers),we will display only msg without revealing internal details
+      res.status(err.statusCode).render('error', {
+         title: 'Something Went Wrong!!!',
+         msg: err.message,
       });
    }
-   //propgramming or other unknown error:dont leak error details
-   else {
-      console.error('Error', err);
-      res.status(500).json({
-         status: 'error',
-         message: 'Something Went Wrong',
-      });
+};
+
+const sendErrorProd = (req, res, err) => {
+   if (req.originalUrl.startsWith('/api')) {
+      //Operation,trusted error:send message to client
+      if (err.isOperational) {
+         res.status(err.statusCode).json({
+            status: err.status,
+            message: err.message,
+         });
+      }
+      //propgramming or other unknown error:dont leak error details
+      else {
+         console.error('Error', err);
+         res.status(500).json({
+            status: 'error',
+            message: 'Something Went Wrong',
+         });
+      }
+   } else {
+      //for a rendered website(using browsers),we will display only msg without revealing internal details
+      if (err.isOperational) {
+         res.status(err.statusCode).render('error', {
+            title: 'Something Went Wrong!',
+            msg: err.message,
+         });
+      }
+      //propgramming or other unknown error:dont leak error details
+      else {
+         console.error('Error', err);
+         res.status(err.statusCode).render('error', {
+            title: 'Something Went Wrong!',
+            msg: 'Please try again later',
+         });
+      }
    }
 };
 
 module.exports = (err, req, res, next) => {
-   console.log(err);
-
    err.statusCode = err.statusCode || 500;
    err.status = err.status || 'error';
    if (process.env.NODE_ENV === 'development') {
-      sendErrorDev(res, err);
+      sendErrorDev(req, res, err);
    } else if (process.env.NODE_ENV === 'production') {
       let error = Object.create(err);
       if (error.name === 'CastError') {
@@ -74,6 +99,6 @@ module.exports = (err, req, res, next) => {
       if (error.name === 'TokenExpiredError') {
          error = handleJwtExpiredError(error);
       }
-      sendErrorProd(res, error);
+      sendErrorProd(req, res, error);
    }
 };
