@@ -1,7 +1,33 @@
+const multer = require('multer');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/apiError');
 const User = require('../models/userModel');
 const factory = require('./handlerFactory');
+
+const multerStorage = multer.diskStorage({
+   destination: (req, file, cb) => {
+      cb(null, 'public/img/users');
+   },
+   filename: (req, file, cb) => {
+      const ext = file.mimetype.split('/')[1];
+      cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
+   },
+});
+
+const multerFilter = (req, file, cb) => {
+   if (file?.mimetype.startsWith('image')) {
+      cb(null, true);
+   } else {
+      cb(new AppError('Not an image!!Please upload an image.', 400), false);
+   }
+};
+
+const upload = multer({
+   storage: multerStorage,
+   fileFilter: multerFilter,
+});
+
+exports.uploadUserPhoto = upload.single('photo');
 
 const filterObj = (obj, allowedFields) => {
    const newObject = {};
@@ -10,7 +36,6 @@ const filterObj = (obj, allowedFields) => {
          newObject[el] = obj[el];
       }
    });
-   console.log(newObject);
    return newObject;
 };
 
@@ -22,7 +47,8 @@ exports.createUser = (req, res) => {
 };
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-   console.log(req.body);
+   console.log('body...', req.body);
+   console.log('file...', req.file);
    if (req.body.password || req.body.passwordConfirm) {
       return next(
          new AppError(
@@ -32,7 +58,10 @@ exports.updateMe = catchAsync(async (req, res, next) => {
    }
    //fiilter data so that we can update only name/email
    const filteredObject = filterObj(req.body, ['name', 'email']);
-   console.log(filteredObject);
+   //if file is present on req object,we are updating photo field with user uploaded photo(we will get the filename from req.file)
+   if (req.file) {
+      filteredObject.photo = req.file.filename;
+   }
    const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       filteredObject,
@@ -41,7 +70,6 @@ exports.updateMe = catchAsync(async (req, res, next) => {
          runValidators: true,
       }
    );
-   console.log('updatedUser', updatedUser);
    res.status(200).json({
       status: 'success',
       data: {

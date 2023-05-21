@@ -15,7 +15,11 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 router.use(authController.protect); //this will check if user is authenticated for any route that passes this middleware
 router.patch('/updatePassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
-router.patch('/updateMe', userController.updateMe);
+router.patch(
+   '/updateMe',
+   userController.uploadUserPhoto,
+   userController.updateMe
+);
 router.delete('/deleteMe', userController.deleteMe);
 
 //all below routes can only be performed by admin
