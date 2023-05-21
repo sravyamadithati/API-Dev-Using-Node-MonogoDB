@@ -6,10 +6,11 @@ const factory = require('./handlerFactory');
 const filterObj = (obj, allowedFields) => {
    const newObject = {};
    Object.keys(obj).forEach((el) => {
-      if (allowedFields.includes[el]) {
+      if (allowedFields.includes(el)) {
          newObject[el] = obj[el];
       }
    });
+   console.log(newObject);
    return newObject;
 };
 
@@ -21,6 +22,7 @@ exports.createUser = (req, res) => {
 };
 
 exports.updateMe = catchAsync(async (req, res, next) => {
+   console.log(req.body);
    if (req.body.password || req.body.passwordConfirm) {
       return next(
          new AppError(
@@ -29,7 +31,8 @@ exports.updateMe = catchAsync(async (req, res, next) => {
       );
    }
    //fiilter data so that we can update only name/email
-   const filteredObject = filterObj(req.body, 'name', 'email');
+   const filteredObject = filterObj(req.body, ['name', 'email']);
+   console.log(filteredObject);
    const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       filteredObject,
