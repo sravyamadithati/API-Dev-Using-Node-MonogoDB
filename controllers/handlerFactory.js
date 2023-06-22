@@ -65,12 +65,11 @@ exports.getOne = (Model, popOptions) =>
 
 exports.getAll = (Model) =>
    catchAsync(async (req, res, next) => {
-      //for review
+      //for review(nested routes-->tours/:tourId/review) and also applicable for bookings(tours/:tourId/bookings)
       let filter = {};
       if (req.params.tourId) {
          filter = { tour: req.params.tourId };
       }
-      //till above line
       const features = new APIFeatures(Model.find(filter), req.query)
          .filter()
          .sort()

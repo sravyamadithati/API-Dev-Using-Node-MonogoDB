@@ -1,18 +1,24 @@
 const multer = require('multer');
+const sharp = require('sharp');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/apiError');
 const User = require('../models/userModel');
 const factory = require('./handlerFactory');
 
-const multerStorage = multer.diskStorage({
-   destination: (req, file, cb) => {
-      cb(null, 'public/img/users');
-   },
-   filename: (req, file, cb) => {
-      const ext = file.mimetype.split('/')[1];
-      cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
-   },
-});
+// stores file in file system
+// const multerStorage = multer.diskStorage({
+//    destination: (req, file, cb) => {
+//       cb(null, 'public/img/users');
+//    },
+//    filename: (req, file, cb) => {
+//       const ext = file.mimetype.split('/')[1];
+//       cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
+//    },
+// });
+
+//storing image as buffer(so that we can do image processing).
+//Buffer is the representation of image in memory
+const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
    if (file?.mimetype.startsWith('image')) {
@@ -28,6 +34,19 @@ const upload = multer({
 });
 
 exports.uploadUserPhoto = upload.single('photo');
+
+exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
+   if (!req.file) return next();
+   //since the filename will not be availble at this step,we are adding filename field to req.file .
+   //we are also adding extension as jpeg directly(since we final convert the images to jpeg in next step)
+   req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+   await sharp(req.file.buffer)
+      .resize(500, 500)
+      .toFormat('jpeg') //converting image type to jpeg
+      .jpeg({ quality: 90 }) //compressing the image
+      .toFile(`public/img/users/${req.file.filename}`); //writing file to filesystem
+   next();
+});
 
 const filterObj = (obj, allowedFields) => {
    const newObject = {};
@@ -47,8 +66,6 @@ exports.createUser = (req, res) => {
 };
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-   console.log('body...', req.body);
-   console.log('file...', req.file);
    if (req.body.password || req.body.passwordConfirm) {
       return next(
          new AppError(
@@ -86,7 +103,6 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
    });
 });
 exports.getMe = (req, res, next) => {
-   console.log(req.user);
    req.params.id = req.user.id;
    next();
 };

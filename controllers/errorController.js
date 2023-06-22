@@ -12,7 +12,6 @@ const handleDuplicateFieldsDB = (err) => {
 
 const handleValidationErrorDB = (err) => {
    const errors = Object.values(err.errors).map((item) => {
-      console.error(item.message);
       return item.message;
    });
    return new AppError(`Invalid input data. ${errors.join('. ')}`, 400);
@@ -68,7 +67,6 @@ const sendErrorProd = (req, res, err) => {
       }
       //propgramming or other unknown error:dont leak error details
       else {
-         console.error('Error', err);
          res.status(err.statusCode).render('error', {
             title: 'Something Went Wrong!',
             msg: 'Please try again later',

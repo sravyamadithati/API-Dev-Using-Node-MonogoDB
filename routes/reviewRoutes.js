@@ -10,6 +10,7 @@ router
    .post(
       authController.restrictTo('user'),
       reviewController.setTourUserIds,
+      reviewController.checkIfTourIsBookedByUser,
       reviewController.createReview
    );
 //we are allowing only roles with 'user' to add a review.So that we can avoid guides and adminstartors to add a review

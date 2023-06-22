@@ -8,11 +8,13 @@ const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
+const compression = require('compression');
 const AppError = require('./utils/apiError');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const viewRouter = require('./routes/viewRoutes');
+const bookingRouter = require('./routes/bookingRoutes');
 const globalErrorhandler = require('./controllers/errorController');
 
 const app = express();
@@ -121,6 +123,9 @@ app.use(
    })
 );
 
+//compression middleware is for compressing all the text that is sent to clients
+app.use(compression());
+
 // app.get('/', (req, res) => {
 //    res.status(200).render('base');
 // });
@@ -134,6 +139,7 @@ app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRouter);
 //handling other routes,*->means for all urls
 app.all('*', (req, res, next) => {
    // res.status(404).json({

@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/apiError');
-const sendMail = require('../utils/email');
+const Email = require('../utils/email');
 
 const signToken = (id) => {
    return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -40,7 +40,10 @@ exports.signUp = catchAsync(async (req, res, next) => {
       passwordConfirm: req.body.passwordConfirm,
       //role:req.body?.role
    });
+   let url = `${req.protocol}://${req.get('host')}/me`; //Eg: http://localhost:3000/me
+   await new Email(newUser, url).sendWelcome(); //sending welcome email to user using Email class
    createSendToken(newUser, 201, res);
+
    // const token = signToken(newUser._id);
    // res.status(201).json({
    //    status: 'success',
@@ -81,7 +84,6 @@ exports.protect = catchAsync(async (req, res, next) => {
    } else if (req.cookies?.jwt && req.cookies?.jwt !== 'loggedOut') {
       token = req.cookies.jwt;
    }
-   console.log(token);
    if (!token) {
       next(
          new AppError(
@@ -180,17 +182,19 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
    //Generate random token
    const resetToken = user.createPasswordResetToken();
    await user.save({ validateBeforeSave: false }); //this.will prevent the err message(Please provide email and password)
-   const resetUrl = `${req.protocol}://${req.get(
-      'host'
-   )}//api/v1/users/resetPassword/${resetToken}`;
-   const message = `Forgot your password? Submit a patch request with new password and passwordConfirm to ${resetUrl}.\nIf you didn't forget your password,Please ignore this email!`;
+
+   //const message = `Forgot your password? Submit a patch request with new password and passwordConfirm to ${resetUrl}.\nIf you didn't forget your password,Please ignore this email!`;
 
    try {
-      await sendMail({
-         email: user.email,
-         subject: 'Your password reset token(valid for 10 min)',
-         message,
-      });
+      const resetUrl = `${req.protocol}://${req.get(
+         'host'
+      )}/api/v1/users/resetPassword/${resetToken}`;
+      await new Email(user, resetUrl).sendPasswordReset();
+      // await sendMail({
+      //    email: user.email,
+      //    subject: 'Your password reset token(valid for 10 min)',
+      //    message,
+      // });
       res.status(200).json({
          status: 'success',
          message: 'Token sent to email',
@@ -221,7 +225,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
       passwordResetExpires: { $gt: Date.now() },
    });
    //2.check if user password rest token is expired
-   console.log('user', user);
    if (!user) {
       return next(new AppError('Token is invalid or expired', 400));
    }

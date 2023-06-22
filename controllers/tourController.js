@@ -1,9 +1,62 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const { deleteOne } = require('../models/tourModel.js');
 const Tour = require('../models/tourModel.js');
 const AppError = require('../utils/apiError.js');
 const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+   if (file?.mimetype.startsWith('image')) {
+      cb(null, true);
+   } else {
+      cb(new AppError('Not an image!!Please upload an image.', 400), false);
+   }
+};
+
+const upload = multer({
+   storage: multerStorage,
+   fileFilter: multerFilter,
+});
+
+//upload.array('images',3)--->req.files
+//upload.single('image')--->req.file
+//upload.fields --->is used when we handle multiple fields
+exports.uploadTourPhotos = upload.fields([
+   { name: 'imageCover', maxCount: 1 },
+   { name: 'images', maxCount: 3 },
+]);
+
+exports.resizeTourPhotos = catchAsync(async (req, res, next) => {
+   //console.log(req.files);
+   if (!req.files.imageCover || !req.files.images) return next();
+
+   //imageCover
+   req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+   await sharp(req.files.imageCover[0].buffer)
+      .resize(2000, 1333)
+      .toFormat('jpeg')
+      .jpeg({ quality: 90 })
+      .toFile(`public/img/tours/${req.body.imageCover}`);
+
+   //images
+   req.body.images = [];
+   await Promise.all(
+      req.files.images.map(async (file, i) => {
+         const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
+         await sharp(file.buffer)
+            .resize(2000, 1333)
+            .toFormat('jpeg')
+            .jpeg({ quality: 90 })
+            .toFile(`public/img/tours/${filename}`);
+         req.body.images.push(filename); //we are adding images to req.body so that it will be available in updateTour middleware
+      })
+   );
+   next();
+});
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
    const stats = await Tour.aggregate([

@@ -3,9 +3,11 @@ const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
 //const reviewController = require('../controllers/reviewController');
 const reviewRouter = require('./reviewRoutes');
+const bookingRouter = require('./bookingRoutes');
 const router = express.Router();
 
 router.use('/:tourId/reviews', reviewRouter);
+router.use('/:tourId/bookings', bookingRouter);
 
 //router.param('id', tourController.checkId); //if url contains id params ,then this middleware will run
 
@@ -41,6 +43,8 @@ router
    .patch(
       authController.protect,
       authController.restrictTo('admin', 'lead-guide'),
+      tourController.uploadTourPhotos,
+      tourController.resizeTourPhotos,
       tourController.updateTour
    )
    .delete(
