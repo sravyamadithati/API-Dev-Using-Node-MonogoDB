@@ -130,7 +130,6 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
 //this fn returns all the tours that are within the range provided from certain location
 exports.getToursWithin = catchAsync(async (req, res, next) => {
    const { distance, latlng, unit } = req.params;
-   console.log(req.params);
    const [lat, lng] = latlng.split(',');
    if (!lat || !lng) {
       next(
